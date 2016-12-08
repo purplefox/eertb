@@ -43,6 +43,7 @@ public class LeafNode extends BaseNode {
                 removeFromArray(keys, i, numKeys);
                 removeFromArray(values, i, numKeys);
                 numKeys--;
+                tree.addKeyCount(-1);
                 if (numKeys < tree.branchingFactor() / 2 - 1) {
                     // TODO
                     // TODO borrow steal etc!
@@ -72,6 +73,7 @@ public class LeafNode extends BaseNode {
         insertInArray(values, i, value);
 
         numKeys++;
+        tree.addKeyCount(1);
 
         if (i == 0) {
             InternalNode par = parent;

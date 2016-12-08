@@ -39,10 +39,10 @@ public abstract class BaseNode implements Node {
 
     public abstract LeafNode findLeaf(Comparable key);
 
-    public void dump(){
-        Queue<Node> level  = new LinkedList<>();
+    public void dump() {
+        Queue<Node> level = new LinkedList<>();
         level.add(this);
-        while(!level.isEmpty()){
+        while (!level.isEmpty()) {
             int count = level.size();
             for (int i = 0; i < count; i++) {
                 Node node = level.poll();
@@ -57,7 +57,6 @@ public abstract class BaseNode implements Node {
                     System.out.print(key + "|");
                 }
                 System.out.print("  ");
-
                 if (!node.isLeaf()) {
                     for (int j = 0; j < node.numKeys(); j++) {
                         Node child = node.getChild(j);

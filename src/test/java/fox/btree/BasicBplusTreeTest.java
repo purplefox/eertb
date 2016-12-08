@@ -53,9 +53,30 @@ public class BasicBplusTreeTest {
     }
 
     @Test
+    public void testOverwrite() {
+        tree.insert("key1", "val1");
+        assertEquals("val1", tree.find("key1"));
+        tree.insert("key1", "val2");
+        assertEquals("val2", tree.find("key1"));
+        assertEquals(1, tree.keyCount());
+    }
+
+    @Test
     public void testRemove() {
         tree.insert("key1", "val1");
+        assertEquals(1, tree.keyCount());
         assertEquals("val1", tree.remove("key1"));
+        assertEquals(0, tree.keyCount());
+    }
+
+    @Test
+    public void testRemoveNonExistent() {
+        tree.insert("key1", "val1");
+        assertEquals(1, tree.keyCount());
+        assertEquals("val1", tree.remove("key1"));
+        assertEquals(0, tree.keyCount());
+        assertNull(tree.remove("key1"));
+        assertEquals(0, tree.keyCount());
     }
 
     @Test
@@ -106,113 +127,7 @@ public class BasicBplusTreeTest {
         new InvariantChecker().checkInvariants(tree);
     }
 
-    protected class InvariantChecker {
 
-        private int leafDepth = -1;
-
-        void checkInvariants(BasicBplusTree tree) {
-            assertTrue(tree.getRoot().isRoot());
-            checkInvariants(tree.getRoot(), null, null, 0);
-        }
-
-        private void checkInvariants(Node node, Comparable greaterOrEqualTo, Comparable lessThan,
-                                     int depth) {
-
-            if (node.isLeaf()) {
-                assertTrue(node.numChildren() == 0);
-            } else {
-                assertTrue(node.numChildren() > 0);
-            }
-
-            // Make sure number of keys, values and children are consistent
-            if (node.isLeaf()) {
-                assertEquals(node.numKeys(), node.numValues());
-                assertEquals(0, node.numChildren());
-
-                // Invariant: all leaves must be at same depth
-                if (leafDepth != -1) {
-                    assertEquals(leafDepth, depth);
-                } else {
-                    leafDepth = depth;
-                }
-            } else {
-                assertEquals(node.numKeys(), node.numChildren());
-                assertEquals(0, node.numValues());
-            }
-
-            // Invariants on number of keys
-            if (node.isRoot()) {
-                if (node.isLeaf()) {
-                    // Root is only node in tree
-                    assertTrue(node.numKeys() >= 1);
-                    assertTrue(node.numKeys() <= B - 1);
-                } else {
-                    assertTrue(node.numKeys() >= 2);
-                    assertTrue(node.numKeys() <= B);
-                }
-            } else if (node.isLeaf()) {
-                //System.out.println("numkeys " + node.numKeys());
-                assertTrue(node.numKeys() >=  B / 2 - 1);
-                assertTrue(node.numKeys() <= B - 1);
-            } else {
-                //System.out.println("numkeys " + node.numKeys());
-                assertTrue(node.numKeys() >=  B / 2);
-                assertTrue(node.numKeys() <= B);
-            }
-
-
-            Comparable prev = null;
-            for (int i = 0; i < node.numKeys(); i++) {
-                Comparable key = node.getKey(i);
-
-                // Invariant: key range
-                if (lessThan != null) {
-                    assertTrue("key:" + key + " lt:" + lessThan, key.compareTo(lessThan) < 0);
-                }
-                if (greaterOrEqualTo != null) {
-                    assertTrue("key:" + key + " gte:" + greaterOrEqualTo, key.compareTo(greaterOrEqualTo) >= 0);
-                }
-
-                // Check the values are correct for a leaf
-                if (node.isLeaf()) {
-                    Object val = node.getValue(i);
-                    assertEquals("val" + key, val);
-                }
-
-                // Invariant: keys must be in sorted order
-                if (prev != null) {
-                    assertTrue(key.compareTo(prev) >= 0);
-                }
-                prev = key;
-
-            }
-
-            // Recurse
-            if (!node.isLeaf()) {
-                for (int i = 1; i < node.numKeys(); i++) {
-                    Node leftChild = node.getChild(i - 1);
-                    checkInvariants(leftChild, i == 1 ?  null : node.getKey(i - 1), node.getKey(i), depth + 1);
-                }
-                Node rightChild = node.getChild(node.numKeys() - 1);
-                checkInvariants(rightChild, node.getKey(node.numKeys() - 1), null, depth + 1);
-
-            }
-
-            // Check that parent-child relationship is consistent in both directions
-            if (node.getParent() != null) {
-                boolean found = false;
-                for (int i = 0; i < node.getParent().numKeys(); i++) {
-                    Node child = node.getParent().getChild(i);
-                    if (child == node) {
-                        found = true;
-                        break;
-                    }
-                }
-                assertTrue(found);
-            }
-
-        }
-    }
 
 
 }

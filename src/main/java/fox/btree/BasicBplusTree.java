@@ -21,7 +21,6 @@ public class BasicBplusTree {
 
     public void insert(Comparable key, Object value) {
         root.insert(key, value);
-        keycount++;
     }
 
     public Object find(Comparable key) {
@@ -54,6 +53,10 @@ public class BasicBplusTree {
 
     int branchingFactor() {
         return branchingFactor;
+    }
+
+    void addKeyCount(int i) {
+        keycount += i;
     }
 
     void setRoot(Node root) {
