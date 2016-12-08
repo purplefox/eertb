@@ -31,7 +31,7 @@ public class InternalNode extends BaseNode {
 
         int pos = 0;
         boolean found = false;
-        for (Node c: children) {
+        for (Node c : children) {
             if (c == position) {
                 found = true;
                 break;

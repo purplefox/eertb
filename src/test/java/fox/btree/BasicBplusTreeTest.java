@@ -3,11 +3,11 @@ package fox.btree;
 import org.junit.Test;
 
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
 
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertNull;
-import static junit.framework.TestCase.assertTrue;
+import static junit.framework.TestCase.*;
 import static org.junit.Assert.assertNotNull;
 
 /**
@@ -93,7 +93,7 @@ public class BasicBplusTreeTest {
             checkInvariants(tree);
         }
         assertEquals(numKeys, tree.keyCount());
-        for (Integer i: keys) {
+        for (Integer i : keys) {
             Object val = tree.find(i);
             assertEquals("val" + i, val);
         }
@@ -126,8 +126,6 @@ public class BasicBplusTreeTest {
     protected void checkInvariants(BasicBplusTree tree) {
         new InvariantChecker().checkInvariants(tree);
     }
-
-
 
 
 }

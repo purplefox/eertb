@@ -52,14 +52,14 @@ public class InvariantChecker {
             }
         } else if (node.isLeaf()) {
             //System.out.println("numkeys " + node.numKeys());
-            assertTrue("leaf node num keys must be >= B / 2 - 1", node.numKeys() >=  branchingFactor / 2 - 1);
+            assertTrue("leaf node num keys must be >= B / 2 - 1", node.numKeys() >= branchingFactor / 2 - 1);
             assertTrue("leaf node num keys must be <= B - 1", node.numKeys() <= branchingFactor - 1);
         } else {
             //System.out.println("numkeys " + node.numKeys());
-            assertTrue("internal node num keys must be >= B / 2", node.numKeys() >=  branchingFactor / 2);
+            assertTrue("internal node num keys must be >= B / 2", node.numKeys() >= branchingFactor / 2);
             assertTrue("internal node num keys must be <= B", node.numKeys() <= branchingFactor);
         }
-        
+
         Comparable prev = null;
         for (int i = 0; i < node.numKeys(); i++) {
             Comparable key = node.getKey(i);
@@ -90,7 +90,7 @@ public class InvariantChecker {
         if (!node.isLeaf()) {
             for (int i = 1; i < node.numKeys(); i++) {
                 Node leftChild = node.getChild(i - 1);
-                checkInvariants(leftChild, i == 1 ?  null : node.getKey(i - 1), node.getKey(i), depth + 1);
+                checkInvariants(leftChild, i == 1 ? null : node.getKey(i - 1), node.getKey(i), depth + 1);
             }
             Node rightChild = node.getChild(node.numKeys() - 1);
             checkInvariants(rightChild, node.getKey(node.numKeys() - 1), null, depth + 1);

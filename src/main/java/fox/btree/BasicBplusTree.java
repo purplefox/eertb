@@ -2,9 +2,9 @@ package fox.btree;
 
 /**
  * A very basic B+Tree used to experiment and play with the structure.
- *
+ * <p>
  * Not designed for real-world usage
- *
+ * <p>
  * Created by tim on 29/11/16.
  */
 public class BasicBplusTree {
@@ -24,7 +24,7 @@ public class BasicBplusTree {
     }
 
     public Object find(Comparable key) {
-       return root.find(key);
+        return root.find(key);
     }
 
     public Object remove(Comparable key) {
