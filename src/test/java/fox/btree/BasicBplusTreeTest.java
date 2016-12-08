@@ -24,7 +24,7 @@ public class BasicBplusTreeTest {
     @Test
     public void testEmptyTree() {
         assertEquals(1, tree.nodeCount());
-        BasicBplusTree.Node root = tree.getRoot();
+        Node root = tree.getRoot();
         assertNotNull(root);
         assertTrue(root.isRoot());
         assertTrue(root.isLeaf());
@@ -115,7 +115,7 @@ public class BasicBplusTreeTest {
             checkInvariants(tree.getRoot(), null, null, 0);
         }
 
-        private void checkInvariants(BasicBplusTree.Node node, Comparable greaterOrEqualTo, Comparable lessThan,
+        private void checkInvariants(Node node, Comparable greaterOrEqualTo, Comparable lessThan,
                                      int depth) {
 
             if (node.isLeaf()) {
@@ -190,10 +190,10 @@ public class BasicBplusTreeTest {
             // Recurse
             if (!node.isLeaf()) {
                 for (int i = 1; i < node.numKeys(); i++) {
-                    BasicBplusTree.Node leftChild = node.getChild(i - 1);
+                    Node leftChild = node.getChild(i - 1);
                     checkInvariants(leftChild, i == 1 ?  null : node.getKey(i - 1), node.getKey(i), depth + 1);
                 }
-                BasicBplusTree.Node rightChild = node.getChild(node.numKeys() - 1);
+                Node rightChild = node.getChild(node.numKeys() - 1);
                 checkInvariants(rightChild, node.getKey(node.numKeys() - 1), null, depth + 1);
 
             }
@@ -202,7 +202,7 @@ public class BasicBplusTreeTest {
             if (node.getParent() != null) {
                 boolean found = false;
                 for (int i = 0; i < node.getParent().numKeys(); i++) {
-                    BasicBplusTree.Node child = node.getParent().getChild(i);
+                    Node child = node.getParent().getChild(i);
                     if (child == node) {
                         found = true;
                         break;
