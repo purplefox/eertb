@@ -4,20 +4,11 @@ import java.util.*;
 
 /**
  *
- * For now, don't worry about the memory layout - get the algo right
- *
- * In the future nodes will map to a block of memory, but that can be anywhere.
- *
- * Blocks will be freed and allocated as need be
- *
- * A certain number of nodes (e.g. below a certain height) can be cached in memory.
- *
- * We will reserve another cache for nodes loaded from disk
  *
  *
  * Created by tim on 29/11/16.
  */
-public class BplusTree {
+public class BasicBplusTree {
 
     private final int b;
 
@@ -26,7 +17,7 @@ public class BplusTree {
 
     private Node root;
 
-    public BplusTree(int b) {
+    public BasicBplusTree(int b) {
         this.b = b;
         this.root = new LeafNode();
     }
@@ -38,6 +29,10 @@ public class BplusTree {
 
     public Object find(Comparable key) {
        return root.find(key);
+    }
+
+    public Object remove(Comparable key) {
+        return root.remove(key);
     }
 
     public void dump() {
@@ -99,6 +94,8 @@ public class BplusTree {
         void setParent(InternalNode parent);
 
         Object find(Comparable key);
+
+        Object remove(Comparable key);
         
         void insert(Comparable key, Object value);
 
@@ -154,7 +151,7 @@ public class BplusTree {
 
         @Override
         public boolean isRoot() {
-            return false;
+            return parent == null;
         }
 
         @Override
@@ -169,6 +166,26 @@ public class BplusTree {
                 Comparable k = keys[i];
                 if (k.equals(key)) {
                     return values[i];
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public Object remove(Comparable key) {
+            // TODO - binary search!
+            for (int i = 0; i < numKeys; i++) {
+                Comparable k = keys[i];
+                if (k.equals(key)) {
+                    Object val = values[i];
+                    removeFromArray(keys, i, numKeys);
+                    removeFromArray(values, i, numKeys);
+                    numKeys--;
+                    if (numKeys < b / 2 - 1) {
+                        // TODO
+                        // TODO borrow steal etc!
+                    }
+                    return val;
                 }
             }
             return null;
@@ -344,7 +361,7 @@ public class BplusTree {
 
         @Override
         public boolean isRoot() {
-            return false;
+            return parent == null;
         }
 
         @Override
@@ -357,6 +374,16 @@ public class BplusTree {
             Node leaf = findLeaf(key);
             if (leaf != null) {
                 return leaf.find(key);
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public Object remove(Comparable key) {
+            Node leaf = findLeaf(key);
+            if (leaf != null) {
+                return leaf.remove(key);
             } else {
                 return null;
             }
@@ -414,28 +441,31 @@ public class BplusTree {
 
         void split() {
 
+            int splitAt = numKeys / 2;
+
             Comparable[] keysLeft = new Comparable[b + 1];
             Node[] childrenLeft = new Node[b + 1];
 
             Comparable[] keysRight = new Comparable[b + 1];
             Node[] childrenRight = new Node[b + 1];
 
-            System.arraycopy(keys, 0, keysLeft, 0, b / 2);
-            System.arraycopy(children, 0, childrenLeft, 0, b / 2);
+            System.arraycopy(keys, 0, keysLeft, 0, splitAt);
+            System.arraycopy(children, 0, childrenLeft, 0, splitAt);
 
-            System.arraycopy(keys, b / 2, keysRight, 0, b / 2);
-            System.arraycopy(children, b / 2, childrenRight, 0, b / 2);
+            System.arraycopy(keys, splitAt, keysRight, 0, numKeys - splitAt);
+            System.arraycopy(children, splitAt, childrenRight, 0, numKeys - splitAt);
 
+            int leftKeys = splitAt;
+            int rightKeys = numKeys - splitAt;
 
             keys = keysLeft;
             children = childrenLeft;
-            numKeys = b / 2;
-
+            numKeys = leftKeys;
 
             InternalNode newNode = new InternalNode();
             newNode.keys = keysRight;
             newNode.children = childrenRight;
-            newNode.numKeys = b / 2;
+            newNode.numKeys = rightKeys;
 
             for (int i = 0; i < newNode.numKeys; i++) {
                 Node c = newNode.getChild(i);
@@ -459,6 +489,11 @@ public class BplusTree {
     private <T> void insertInArray(T[] arr, int pos, T val) {
         System.arraycopy(arr, pos, arr, pos + 1, arr.length - pos - 1);
         arr[pos] = val;
+    }
+
+    private <T> void removeFromArray(T[] arr, int pos, int numKeys) {
+        System.arraycopy(arr, pos + 1, arr, pos, numKeys - pos - 1);
+        arr[numKeys - 1] = null;
     }
 
 }
