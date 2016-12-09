@@ -132,7 +132,7 @@ public class BasicBplusTreeTest {
     //@Repeat(value=10000)
     public void testRandomInsertRemove() {
         assertEquals(1, tree.nodeCount());
-        int numKeys = 100;
+        int numKeys = 1000;
         Set<Integer> keys = new HashSet<>();
         for (int i = 0; i < numKeys; i++) {
             int key = randomInt(numKeys);
@@ -141,11 +141,8 @@ public class BasicBplusTreeTest {
             checkInvariants(tree);
         }
         assertEquals(keys.size(), tree.keyCount());
-        //tree.dump();
         for (Integer i : keys) {
-            //System.out.println("Removing: " + i);
             Object val = tree.remove(i);
-            //tree.dump();
             assertEquals("val" + i, val);
             // Check invariants at each step to make sure still valid
             checkInvariants(tree);
@@ -155,16 +152,13 @@ public class BasicBplusTreeTest {
     @Test
     public void testSequentialInsertRemove() {
         assertEquals(1, tree.nodeCount());
-        int numKeys = 10;
+        int numKeys = 1000;
         for (int i = 0; i < numKeys; i++) {
             tree.insert(i, "val" + i);
         }
         assertEquals(numKeys, tree.keyCount());
-        tree.dump();
         for (int i = 0; i < numKeys; i++) {
-            System.out.println("Removing: " + i);
             Object val = tree.remove(i);
-            tree.dump();
             checkInvariants(tree);
             assertEquals("val" + i, val);
         }
@@ -173,38 +167,16 @@ public class BasicBplusTreeTest {
     @Test
     public void testReverseSequentialInsertRemove() {
         assertEquals(1, tree.nodeCount());
-        int numKeys = 10;
+        int numKeys = 1000;
         for (int i = 0; i < numKeys; i++) {
             tree.insert(i, "val" + i);
         }
         assertEquals(numKeys, tree.keyCount());
-        tree.dump();
         for (int i = numKeys - 1; i >= 0; i--) {
-            System.out.println("Removing: " + i);
             Object val = tree.remove(i);
-            tree.dump();
             checkInvariants(tree);
             assertEquals("val" + i, val);
         }
-    }
-
-    @Test
-    public void testFoo() {
-        assertEquals(1, tree.nodeCount());
-        int numKeys = 10;
-        for (int i = 0; i < numKeys; i++) {
-            tree.insert(i, "val" + i);
-        }
-        assertEquals(numKeys, tree.keyCount());
-        tree.dump();
-        checkInvariants(tree);
-//        for (int i = numKeys - 1; i >= 0; i--) {
-//            System.out.println("Removing: " + i);
-//            Object val = tree.remove(i);
-//            tree.dump();
-//            checkInvariants(tree);
-//            assertEquals("val" + i, val);
-      //  }
     }
 
     private int randomInt(int max) {

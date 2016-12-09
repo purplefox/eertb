@@ -15,10 +15,7 @@ public class InvariantChecker {
         checkInvariants(tree.getRoot(), null, null, 0);
     }
 
-    private void checkInvariants(Node node, Comparable leftEqualTo, Comparable lessThan,
-                                 int depth) {
-
-        //System.out.println("Checking node " + node.getNodeNum() + " left should be = " + leftEqualTo + " and all < " + lessThan);
+    private void checkInvariants(Node node, Comparable greaterThanOrEqual, Comparable lessThan, int depth) {
 
         if (node.isLeaf()) {
             assertTrue("leaft node must not have children", node.numChildren() == 0);
@@ -66,30 +63,37 @@ public class InvariantChecker {
                 assertTrue("non leaf root node num keys must be <= B", node.numKeys() <= branchingFactor);
             }
         } else if (node.isLeaf()) {
-            //System.out.println("numkeys " + node.numKeys());
             assertTrue("leaf node num keys must be >= B / 2 - 1", node.numKeys() >= branchingFactor / 2 - 1);
             assertTrue("leaf node num keys must be <= B - 1", node.numKeys() <= branchingFactor - 1);
         } else {
-            //System.out.println("numkeys " + node.numKeys());
             assertTrue("internal node num keys must be >= B / 2", node.numKeys() >= branchingFactor / 2);
             assertTrue("internal node num keys must be <= B", node.numKeys() <= branchingFactor);
         }
 
-//        if (leftEqualTo != null) {
-//            assertTrue("key:" + node.getKey(0) + " left key not equal to:" + leftEqualTo, node.getKey(0).compareTo(leftEqualTo) == 0);
-//        }
+        // The left most key in any leftmost internal node is never used so we don't have to keep it matching the
+        // left most key in its child, so we only check from 1 in this case, otherwise zero
+        int start = 1;
+        Node par = node.getParent();
+        while (par != null) {
+            if (node.getParent().getChild(0) != node) {
+                // Not left most node
+                start = 0;
+                break;
+            }
+            par = par.getParent();
+        }
+
         Comparable prev = null;
-        for (int i = 1; i < node.numKeys(); i++) {
+        for (int i = start; i < node.numKeys(); i++) {
             Comparable key = node.getKey(i);
 
             // Invariant: key range
-            if (leftEqualTo != null) {
-                assertTrue("key:" + key + " not >=" + leftEqualTo, key.compareTo(leftEqualTo) >= 0);
+            if (greaterThanOrEqual != null) {
+                assertTrue("key:" + key + " not >=" + greaterThanOrEqual, key.compareTo(greaterThanOrEqual) >= 0);
             }
             if (lessThan != null) {
                 assertTrue("key:" + key + " lt:" + lessThan, key.compareTo(lessThan) < 0);
             }
-
 
             // Check the values are correct for a leaf
             if (node.isLeaf()) {
@@ -109,9 +113,9 @@ public class InvariantChecker {
         if (!node.isLeaf()) {
             for (int i = 0; i < node.numKeys(); i++) {
                 Node child = node.getChild(i);
-                Comparable leftEqual = i == 0 ? null : node.getKey(i);
+                Comparable gOrE = i == 0 ? null : node.getKey(i);
                 Comparable less = i < node.numKeys() - 1 ? node.getKey(i + 1) : null;
-                checkInvariants(child, leftEqual, less, depth + 1);
+                checkInvariants(child, gOrE, less, depth + 1);
             }
             Node rightChild = node.getChild(node.numKeys() - 1);
             checkInvariants(rightChild, node.getKey(node.numKeys() - 1), null, depth + 1);

@@ -183,6 +183,8 @@ public class LeafNode extends BaseNode {
         numKeys++;
         tree.addKeyCount(1);
 
+// Commented out because for any leftmost node its not important that the parent key for the child equals the leftmost
+// value as its never used, therefore we can save some cycles by not keeping it up to date
 //        if (i == 0) {
 //            InternalNode par = parent;
 //            Node child = this;

@@ -192,11 +192,6 @@ public class InternalNode extends BaseNode {
             if (numKeys < tree.branchingFactor() / 2) {
                 if (!tryStealSibling()) {
                     mergeSibling();
-//                    if (parent.isRoot() && parent.numKeys() == 1) {
-//                        // Replace root
-//                        parent = null;
-//                        tree.setRoot(this);
-//                    }
                 }
             }
         } else {
