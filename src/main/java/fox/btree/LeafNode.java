@@ -44,7 +44,7 @@ public class LeafNode extends BaseNode {
                 removeFromArray(values, i, numKeys);
                 numKeys--;
                 tree.addKeyCount(-1);
-                if (!isRoot() && numKeys < tree.branchingFactor() / 2 - 1) {
+                if (!isRoot() && numKeys < minKeys()) {
                     if (!tryStealSibling()) {
                         mergeSibling();
                     }
@@ -53,6 +53,137 @@ public class LeafNode extends BaseNode {
             }
         }
         return null;
+    }
+
+
+
+    @Override
+    public void insert(Comparable key, Object value) {
+        // Insert sorted order
+        int i = 0;
+        for (; i < numKeys; i++) {
+            int comp = key.compareTo(keys[i]);
+            if (comp == 0) {
+                // update the value
+                values[i] = value;
+                return;
+            } else if (comp < 0) {
+                break;
+            }
+        }
+
+        insertInArray(keys, i, key);
+        insertInArray(values, i, value);
+
+        numKeys++;
+        tree.addKeyCount(1);
+
+// Commented out because for any leftmost node its not important that the parent key for the child equals the leftmost
+// value as its never used, therefore we can save some cycles by not keeping it up to date
+//        if (i == 0) {
+//            InternalNode par = parent;
+//            Node child = this;
+//            while (par != null && par.getChild(0) == child) {
+//                // Not strictly necessary but this updates the zeroth key in the parent that we don't use so it reflects
+//                // the left most value in the child node
+//                par.setKey(0, key);
+//
+//                child = par;
+//                par = (InternalNode)par.getParent();
+//            }
+//        }
+
+        if (numKeys == maxKeys() + 1) {
+            // No room - split
+            split();
+        }
+    }
+
+    @Override
+    public LeafNode findLeaf(Comparable key) {
+        return this;
+    }
+
+    @Override
+    protected int minKeys() {
+        return tree.branchingFactor() / 2 - 1;
+    }
+
+    @Override
+    protected int maxKeys() {
+        return tree.branchingFactor() - 1;
+    }
+
+    @Override
+    public int numKeys() {
+        return numKeys;
+    }
+
+    @Override
+    public int numValues() {
+        return numKeys;
+    }
+
+    @Override
+    public int numChildren() {
+        return 0;
+    }
+
+    @Override
+    public Comparable getKey(int pos) {
+        return keys[pos];
+    }
+
+    @Override
+    public Object getValue(int pos) {
+        return values[pos];
+    }
+
+    @Override
+    public Node getChild(int pos) {
+        return null;
+    }
+
+    private void split() {
+
+        int b = tree.branchingFactor();
+
+        Comparable[] keysLeft = new Comparable[b];
+        Object[] valuesLeft = new Object[b];
+
+        Comparable[] keysRight = new Comparable[b];
+        Object[] valuesRight = new Object[b];
+
+        System.arraycopy(keys, 0, keysLeft, 0, b / 2);
+        System.arraycopy(values, 0, valuesLeft, 0, b / 2);
+
+        System.arraycopy(keys, b / 2, keysRight, 0, b / 2);
+        System.arraycopy(values, b / 2, valuesRight, 0, b / 2);
+
+        keys = keysLeft;
+        values = valuesLeft;
+        numKeys = b / 2;
+
+        LeafNode newNode = new LeafNode(tree);
+        newNode.keys = keysRight;
+        newNode.values = valuesRight;
+        newNode.numKeys = b / 2;
+
+        if (parent == null) {
+            // Create a new root
+            parent = new InternalNode(tree);
+
+            newNode.setParent(parent);
+
+            parent.addChildPointer(0, keys[0], this);
+            parent.addChildPointer(1, newNode.keys[0], newNode);
+
+            tree.setRoot(parent);
+        } else {
+            newNode.setParent(parent);
+            parent.insertChild(this, newNode.keys[0], newNode);
+        }
+
     }
 
     private boolean tryStealSibling() {
@@ -77,7 +208,7 @@ public class LeafNode extends BaseNode {
 
     private boolean tryStealSibling(LeafNode sibling, int siblingPos, boolean left) {
         int siblingNumKeys = sibling.numKeys();
-        if (siblingNumKeys >= tree.branchingFactor() / 2) {
+        if (siblingNumKeys > minKeys()) {
             // It has spare key(s)
 
             int posToSteal = left ? sibling.numKeys - 1 : 0;
@@ -115,7 +246,7 @@ public class LeafNode extends BaseNode {
                 continue;
             }
             // left or right sibling
-            if (sibling.numKeys == tree.branchingFactor() / 2 - 1) {
+            if (sibling.numKeys == minKeys()) {
                 // Has min number of keys so can merge it
                 mergeSibling(sibling, left, i);
                 return;
@@ -160,125 +291,6 @@ public class LeafNode extends BaseNode {
 
         // remove merged key from parent
         parent.removeKey(srcPos);
-    }
-
-    @Override
-    public void insert(Comparable key, Object value) {
-        // Insert sorted order
-        int i = 0;
-        for (; i < numKeys; i++) {
-            int comp = key.compareTo(keys[i]);
-            if (comp == 0) {
-                // update the value
-                values[i] = value;
-                return;
-            } else if (comp < 0) {
-                break;
-            }
-        }
-
-        insertInArray(keys, i, key);
-        insertInArray(values, i, value);
-
-        numKeys++;
-        tree.addKeyCount(1);
-
-// Commented out because for any leftmost node its not important that the parent key for the child equals the leftmost
-// value as its never used, therefore we can save some cycles by not keeping it up to date
-//        if (i == 0) {
-//            InternalNode par = parent;
-//            Node child = this;
-//            while (par != null && par.getChild(0) == child) {
-//                // Not strictly necessary but this updates the zeroth key in the parent that we don't use so it reflects
-//                // the left most value in the child node
-//                par.setKey(0, key);
-//
-//                child = par;
-//                par = (InternalNode)par.getParent();
-//            }
-//        }
-
-        if (numKeys == tree.branchingFactor()) {
-            // No room - split
-            split();
-        }
-    }
-
-    @Override
-    public LeafNode findLeaf(Comparable key) {
-        return this;
-    }
-
-    @Override
-    public int numKeys() {
-        return numKeys;
-    }
-
-    @Override
-    public int numValues() {
-        return numKeys;
-    }
-
-    @Override
-    public int numChildren() {
-        return 0;
-    }
-
-    @Override
-    public Comparable getKey(int pos) {
-        return keys[pos];
-    }
-
-    @Override
-    public Object getValue(int pos) {
-        return values[pos];
-    }
-
-    @Override
-    public Node getChild(int pos) {
-        return null;
-    }
-
-    void split() {
-
-        int b = tree.branchingFactor();
-
-        Comparable[] keysLeft = new Comparable[b];
-        Object[] valuesLeft = new Object[b];
-
-        Comparable[] keysRight = new Comparable[b];
-        Object[] valuesRight = new Object[b];
-
-        System.arraycopy(keys, 0, keysLeft, 0, b / 2);
-        System.arraycopy(values, 0, valuesLeft, 0, b / 2);
-
-        System.arraycopy(keys, b / 2, keysRight, 0, b / 2);
-        System.arraycopy(values, b / 2, valuesRight, 0, b / 2);
-
-        keys = keysLeft;
-        values = valuesLeft;
-        numKeys = b / 2;
-
-        LeafNode newNode = new LeafNode(tree);
-        newNode.keys = keysRight;
-        newNode.values = valuesRight;
-        newNode.numKeys = b / 2;
-
-        if (parent == null) {
-            // Create a new root
-            parent = new InternalNode(tree);
-
-            newNode.setParent(parent);
-
-            parent.addChildPointer(0, keys[0], this);
-            parent.addChildPointer(1, newNode.keys[0], newNode);
-
-            tree.setRoot(parent);
-        } else {
-            newNode.setParent(parent);
-            parent.insertChild(this, newNode.keys[0], newNode);
-        }
-
     }
 
 }

@@ -78,4 +78,8 @@ public abstract class BaseNode implements Node {
         arr[numKeys - 1] = null;
     }
 
+    protected abstract int minKeys();
+
+    protected abstract int maxKeys();
+
 }

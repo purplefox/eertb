@@ -17,49 +17,6 @@ public class InternalNode extends BaseNode {
         children = new BaseNode[b + 1];
     }
 
-    void addChildPointer(int pos, Comparable key, Node child) {
-        insertInArray(keys, pos, key);
-        insertInArray(children, pos, child);
-        numKeys++;
-    }
-
-    void setKey(int pos, Comparable key) {
-        keys[pos] = key;
-    }
-
-    void insertChild(Node position, Comparable key, Node child) {
-
-        int pos = 0;
-        boolean found = false;
-        for (Node c : children) {
-            if (c == position) {
-                found = true;
-                break;
-            }
-            pos++;
-        }
-
-        if (!found) {
-            throw new IllegalStateException("Can't find node");
-        }
-
-        pos++;
-
-        // insert key at position i
-        insertInArray(keys, pos, key);
-        insertInArray(children, pos, child);
-
-        numKeys++;
-
-        // insert child at position i + 1
-
-        // For inner nodes the first key is effectively ignored so we split at b + 1
-        // (see visualisation)
-        if (numKeys == tree.branchingFactor() + 1) {
-            // No room - split
-            split();
-        }
-    }
 
     @Override
     public boolean isLeaf() {
@@ -107,6 +64,16 @@ public class InternalNode extends BaseNode {
     }
 
     @Override
+    protected int minKeys() {
+        return tree.branchingFactor() / 2;
+    }
+
+    @Override
+    protected int maxKeys() {
+        return tree.branchingFactor();
+    }
+
+    @Override
     public int numKeys() {
         return numKeys;
     }
@@ -136,7 +103,51 @@ public class InternalNode extends BaseNode {
         return children[pos];
     }
 
-    void split() {
+    void addChildPointer(int pos, Comparable key, Node child) {
+        insertInArray(keys, pos, key);
+        insertInArray(children, pos, child);
+        numKeys++;
+    }
+
+    void setKey(int pos, Comparable key) {
+        keys[pos] = key;
+    }
+
+    void insertChild(Node position, Comparable key, Node child) {
+
+        int pos = 0;
+        boolean found = false;
+        for (Node c : children) {
+            if (c == position) {
+                found = true;
+                break;
+            }
+            pos++;
+        }
+
+        if (!found) {
+            throw new IllegalStateException("Can't find node");
+        }
+
+        pos++;
+
+        // insert key at position i
+        insertInArray(keys, pos, key);
+        insertInArray(children, pos, child);
+
+        numKeys++;
+
+        // insert child at position i + 1
+
+        // For inner nodes the first key is effectively ignored so we split at b + 1
+        // (see visualisation)
+        if (numKeys == maxKeys() + 1) {
+            // No room - split
+            split();
+        }
+    }
+
+    private void split() {
 
         int splitAt = numKeys / 2 + 1;
 
@@ -227,7 +238,7 @@ public class InternalNode extends BaseNode {
     private boolean tryStealSibling(InternalNode sibling, int siblingPos, boolean left) {
 
         int siblingNumKeys = sibling.numKeys();
-        if (siblingNumKeys >= tree.branchingFactor() / 2 + 1) {
+        if (siblingNumKeys > minKeys()) {
             // It has spare key(s)
 
             int posToSteal = left ? sibling.numKeys - 1 : 0;
@@ -267,7 +278,7 @@ public class InternalNode extends BaseNode {
                 continue;
             }
             // left or right sibling
-            if (sibling.numKeys == tree.branchingFactor() / 2) {
+            if (sibling.numKeys == minKeys()) {
                 // Has min number of keys so can merge it
                 mergeSibling(sibling, left, i);
                 return;
