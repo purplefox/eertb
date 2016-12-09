@@ -1,5 +1,9 @@
 package fox.btree;
 
+import io.vertx.ext.unit.junit.Repeat;
+import io.vertx.ext.unit.junit.RepeatRule;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.security.SecureRandom;
@@ -15,11 +19,19 @@ import static org.junit.Assert.assertNotNull;
  */
 public class BasicBplusTreeTest {
 
+    @Rule
+    public RepeatRule repeatRule = new RepeatRule();
+
     private Random random = new SecureRandom();
 
-    protected final int B = 10;
+    protected final int B = 4;
 
-    protected BasicBplusTree tree = new BasicBplusTree(B);
+    protected BasicBplusTree tree;
+
+    @Before
+    public void setup() {
+        tree = new BasicBplusTree(B);
+    }
 
     @Test
     public void testEmptyTree() {
@@ -80,6 +92,7 @@ public class BasicBplusTreeTest {
     }
 
     @Test
+    //@Repeat(value=100000)
     public void testRandomInsertFind() {
         assertEquals(1, tree.nodeCount());
         int numKeys = 1000;
@@ -92,7 +105,7 @@ public class BasicBplusTreeTest {
             // Check invariants at each step to make sure still valid
             checkInvariants(tree);
         }
-        assertEquals(numKeys, tree.keyCount());
+        assertEquals(keys.size(), tree.keyCount());
         for (Integer i : keys) {
             Object val = tree.find(i);
             assertEquals("val" + i, val);
@@ -113,6 +126,85 @@ public class BasicBplusTreeTest {
             Object val = tree.find(i);
             assertEquals("val" + i, val);
         }
+    }
+
+    @Test
+    //@Repeat(value=10000)
+    public void testRandomInsertRemove() {
+        assertEquals(1, tree.nodeCount());
+        int numKeys = 100;
+        Set<Integer> keys = new HashSet<>();
+        for (int i = 0; i < numKeys; i++) {
+            int key = randomInt(numKeys);
+            keys.add(key);
+            tree.insert(key, "val" + key);
+            checkInvariants(tree);
+        }
+        assertEquals(keys.size(), tree.keyCount());
+        //tree.dump();
+        for (Integer i : keys) {
+            //System.out.println("Removing: " + i);
+            Object val = tree.remove(i);
+            //tree.dump();
+            assertEquals("val" + i, val);
+            // Check invariants at each step to make sure still valid
+            checkInvariants(tree);
+        }
+    }
+
+    @Test
+    public void testSequentialInsertRemove() {
+        assertEquals(1, tree.nodeCount());
+        int numKeys = 10;
+        for (int i = 0; i < numKeys; i++) {
+            tree.insert(i, "val" + i);
+        }
+        assertEquals(numKeys, tree.keyCount());
+        tree.dump();
+        for (int i = 0; i < numKeys; i++) {
+            System.out.println("Removing: " + i);
+            Object val = tree.remove(i);
+            tree.dump();
+            checkInvariants(tree);
+            assertEquals("val" + i, val);
+        }
+    }
+
+    @Test
+    public void testReverseSequentialInsertRemove() {
+        assertEquals(1, tree.nodeCount());
+        int numKeys = 10;
+        for (int i = 0; i < numKeys; i++) {
+            tree.insert(i, "val" + i);
+        }
+        assertEquals(numKeys, tree.keyCount());
+        tree.dump();
+        for (int i = numKeys - 1; i >= 0; i--) {
+            System.out.println("Removing: " + i);
+            Object val = tree.remove(i);
+            tree.dump();
+            checkInvariants(tree);
+            assertEquals("val" + i, val);
+        }
+    }
+
+    @Test
+    public void testFoo() {
+        assertEquals(1, tree.nodeCount());
+        int numKeys = 10;
+        for (int i = 0; i < numKeys; i++) {
+            tree.insert(i, "val" + i);
+        }
+        assertEquals(numKeys, tree.keyCount());
+        tree.dump();
+        checkInvariants(tree);
+//        for (int i = numKeys - 1; i >= 0; i--) {
+//            System.out.println("Removing: " + i);
+//            Object val = tree.remove(i);
+//            tree.dump();
+//            checkInvariants(tree);
+//            assertEquals("val" + i, val);
+      //  }
     }
 
     private int randomInt(int max) {

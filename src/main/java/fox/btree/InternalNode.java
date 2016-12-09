@@ -138,7 +138,7 @@ public class InternalNode extends BaseNode {
 
     void split() {
 
-        int splitAt = numKeys / 2;
+        int splitAt = numKeys / 2 + 1;
 
         int b = tree.branchingFactor();
 
@@ -182,5 +182,147 @@ public class InternalNode extends BaseNode {
             newNode.setParent(parent);
             parent.insertChild(this, newNode.keys[0], newNode);
         }
+    }
+
+    void removeKey(int pos) {
+        removeFromArray(keys, pos, numKeys);
+        removeFromArray(children, pos, numKeys);
+        numKeys--;
+        if (!isRoot()) {
+            if (numKeys < tree.branchingFactor() / 2) {
+                if (!tryStealSibling()) {
+                    mergeSibling();
+//                    if (parent.isRoot() && parent.numKeys() == 1) {
+//                        // Replace root
+//                        parent = null;
+//                        tree.setRoot(this);
+//                    }
+                }
+            }
+        } else {
+            if (numKeys == 1) {
+                // Child becomes root
+                BaseNode child = children[0];
+                child.setParent(null);
+                tree.setRoot(child);
+            }
+        }
+    }
+
+    private boolean tryStealSibling() {
+        int numSiblings = parent.numChildren();
+        for (int i = 0; i < numSiblings; i++) {
+            InternalNode sibling = (InternalNode)parent.getChild(i);
+            if (i < numSiblings - 1 && parent.getChild(i + 1) == this) {
+                // left sibling
+                if (tryStealSibling(sibling, i, true)) {
+                    return true;
+                }
+            }
+            if (i > 0 && parent.getChild(i - 1) == this) {
+                // Right sibling
+                if (tryStealSibling(sibling, i, false)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean tryStealSibling(InternalNode sibling, int siblingPos, boolean left) {
+
+        int siblingNumKeys = sibling.numKeys();
+        if (siblingNumKeys >= tree.branchingFactor() / 2 + 1) {
+            // It has spare key(s)
+
+            int posToSteal = left ? sibling.numKeys - 1 : 0;
+            int posToInsert = left ? 0 : numKeys;
+
+            Comparable key = sibling.getKey(posToSteal);
+            Node child = sibling.getChild(posToSteal);
+            removeFromArray(sibling.keys, posToSteal, siblingNumKeys);
+            removeFromArray(sibling.children, posToSteal, siblingNumKeys);
+            sibling.numKeys--;
+            insertInArray(keys, posToInsert, key);
+            insertInArray(children, posToInsert, child);
+            numKeys++;
+            // Update parent key value
+            if (left) {
+                parent.setKey(siblingPos + 1, key);
+            } else {
+                parent.setKey(siblingPos, sibling.keys[0]);
+            }
+            // Update parent of child
+            children[posToInsert].parent = this;
+            return true;
+        }
+        return false;
+    }
+
+    private void mergeSibling() {
+        int numSiblings = parent.numChildren();
+        for (int i = 0; i < numSiblings; i++) {
+            InternalNode sibling = (InternalNode)parent.getChild(i);
+            boolean left;
+            if (i < numSiblings - 1 && parent.getChild(i + 1) == this) {
+                left = true;
+            } else if (i > 0 && parent.getChild(i - 1) == this) {
+                left = false;
+            } else {
+                continue;
+            }
+            // left or right sibling
+            if (sibling.numKeys == tree.branchingFactor() / 2) {
+                // Has min number of keys so can merge it
+                mergeSibling(sibling, left, i);
+                return;
+            }
+        }
+    }
+
+    private void mergeSibling(InternalNode sibling, boolean left, int siblingPos) {
+        Comparable[] destKeys;
+        Node[] destChildren;
+
+        Comparable[] srcKeys;
+        Node[] srcChildren;
+
+        InternalNode dest;
+        InternalNode src;
+
+        int srcPos;
+
+        if (left) {
+            destKeys = sibling.keys;
+            destChildren = sibling.children;
+            srcKeys = keys;
+            srcChildren = children;
+            dest = sibling;
+            src = this;
+            srcPos = siblingPos + 1;
+        } else {
+            destKeys = keys;
+            destChildren = children;
+            srcKeys = sibling.keys;
+            srcChildren = sibling.children;
+            dest = this;
+            src = sibling;
+            srcPos = siblingPos;
+        }
+
+        // Update parents of children
+        for (int i = 0; i < src.numKeys; i++) {
+            src.children[i].setParent(dest);
+        }
+
+        System.arraycopy(srcKeys, 0, destKeys, dest.numKeys, src.numKeys);
+        System.arraycopy(srcChildren, 0, destChildren, dest.numKeys, src.numKeys);
+
+        dest.numKeys += src.numKeys;
+
+        // remove merged key from parent
+        parent.removeKey(srcPos);
+
+
     }
 }

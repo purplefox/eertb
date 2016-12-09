@@ -15,13 +15,28 @@ public class InvariantChecker {
         checkInvariants(tree.getRoot(), null, null, 0);
     }
 
-    private void checkInvariants(Node node, Comparable greaterOrEqualTo, Comparable lessThan,
+    private void checkInvariants(Node node, Comparable leftEqualTo, Comparable lessThan,
                                  int depth) {
+
+        //System.out.println("Checking node " + node.getNodeNum() + " left should be = " + leftEqualTo + " and all < " + lessThan);
 
         if (node.isLeaf()) {
             assertTrue("leaft node must not have children", node.numChildren() == 0);
         } else {
             assertTrue("internal node must have children", node.numChildren() > 0);
+        }
+
+        // Check that parent-child relationship is consistent in both directions
+        if (node.getParent() != null) {
+            boolean found = false;
+            for (int i = 0; i < node.getParent().numKeys(); i++) {
+                Node child = node.getParent().getChild(i);
+                if (child == node) {
+                    found = true;
+                    break;
+                }
+            }
+            assertTrue("parent child relationship inconsistent in node " + node.getNodeNum(), found);
         }
 
         // Make sure number of keys, values and children are consistent
@@ -44,7 +59,7 @@ public class InvariantChecker {
         if (node.isRoot()) {
             if (node.isLeaf()) {
                 // Root is only node in tree
-                assertTrue("leaf root node num keys must be >= 1", node.numKeys() >= 1);
+                assertTrue("leaf root node num keys must be >= 0", node.numKeys() >= 0);
                 assertTrue("leaft root node num keys must be <= B - 1", node.numKeys() <= branchingFactor - 1);
             } else {
                 assertTrue("non leaf root node num keys must be >= 2", node.numKeys() >= 2);
@@ -60,17 +75,21 @@ public class InvariantChecker {
             assertTrue("internal node num keys must be <= B", node.numKeys() <= branchingFactor);
         }
 
+//        if (leftEqualTo != null) {
+//            assertTrue("key:" + node.getKey(0) + " left key not equal to:" + leftEqualTo, node.getKey(0).compareTo(leftEqualTo) == 0);
+//        }
         Comparable prev = null;
-        for (int i = 0; i < node.numKeys(); i++) {
+        for (int i = 1; i < node.numKeys(); i++) {
             Comparable key = node.getKey(i);
 
             // Invariant: key range
+            if (leftEqualTo != null) {
+                assertTrue("key:" + key + " not >=" + leftEqualTo, key.compareTo(leftEqualTo) >= 0);
+            }
             if (lessThan != null) {
                 assertTrue("key:" + key + " lt:" + lessThan, key.compareTo(lessThan) < 0);
             }
-            if (greaterOrEqualTo != null) {
-                assertTrue("key:" + key + " gte:" + greaterOrEqualTo, key.compareTo(greaterOrEqualTo) >= 0);
-            }
+
 
             // Check the values are correct for a leaf
             if (node.isLeaf()) {
@@ -88,26 +107,15 @@ public class InvariantChecker {
 
         // Recurse
         if (!node.isLeaf()) {
-            for (int i = 1; i < node.numKeys(); i++) {
-                Node leftChild = node.getChild(i - 1);
-                checkInvariants(leftChild, i == 1 ? null : node.getKey(i - 1), node.getKey(i), depth + 1);
+            for (int i = 0; i < node.numKeys(); i++) {
+                Node child = node.getChild(i);
+                Comparable leftEqual = i == 0 ? null : node.getKey(i);
+                Comparable less = i < node.numKeys() - 1 ? node.getKey(i + 1) : null;
+                checkInvariants(child, leftEqual, less, depth + 1);
             }
             Node rightChild = node.getChild(node.numKeys() - 1);
             checkInvariants(rightChild, node.getKey(node.numKeys() - 1), null, depth + 1);
 
-        }
-
-        // Check that parent-child relationship is consistent in both directions
-        if (node.getParent() != null) {
-            boolean found = false;
-            for (int i = 0; i < node.getParent().numKeys(); i++) {
-                Node child = node.getParent().getChild(i);
-                if (child == node) {
-                    found = true;
-                    break;
-                }
-            }
-            assertTrue("parent child relationship inconsistent in node " + node.getNodeNum(), found);
         }
 
     }

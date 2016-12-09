@@ -15,6 +15,9 @@ public class BasicBplusTree {
     private Node root;
 
     public BasicBplusTree(int branchingFactor) {
+        if (branchingFactor < 4) {
+            throw new IllegalArgumentException("branchingFactor must be >= 4");
+        }
         this.branchingFactor = branchingFactor;
         this.root = new LeafNode(this);
     }

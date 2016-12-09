@@ -64,7 +64,7 @@ public abstract class BaseNode implements Node {
                     }
                 }
             }
-            System.out.print("\n");
+            System.out.print(" ****\n");
         }
     }
 
